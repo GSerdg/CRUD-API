@@ -1,18 +1,19 @@
 import 'dotenv/config';
-import buildServer from './server';
+import { buildServer } from './app.js';
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
+const PORT = Number(process.env.PORT) || 4000;
 
 async function main() {
   const app = await buildServer();
 
-  await app.listen({ port: PORT, host: '0.0.0.0' });
-  // eslint-disable-next-line no-console
-  console.log(`Server (skeleton) listening at http://localhost:${PORT}`);
+  try {
+    await app.listen({ port: PORT, host: '0.0.0.0' });
+    // eslint-disable-next-line no-console
+    console.log(`Server is running on http://localhost:${PORT}`);
+  } catch (error) {
+    app.log.error(error);
+    process.exit(1);
+  }
 }
 
-main().catch((err) => {
-  // eslint-disable-next-line no-console
-  console.error('Failed to start server', err);
-  process.exit(1);
-});
+main();
