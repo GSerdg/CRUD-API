@@ -133,4 +133,101 @@ describe('Product API', () => {
     expect(response.statusCode).toBe(404);
     expect(payload.message).toBe(getNotFoundMessage(id));
   });
+
+  it('PUT /api/products/{productId} - should update product', async () => {
+    const changeFields = { name: 'Changed name' };
+    const response = await app.inject({
+      method: 'PUT',
+      url: `/api/products/${lastProductId}`,
+      payload: changeFields,
+    });
+
+    const payload = JSON.parse(response.payload);
+
+    expect(response.statusCode).toBe(200);
+    expect(payload).toMatchObject(changeFields);
+
+    const checkResponse = await app.inject({
+      method: 'GET',
+      url: `/api/products/${lastProductId}`,
+    });
+
+    const checkPayload = JSON.parse(checkResponse.payload);
+    expect(checkResponse.statusCode).toBe(200);
+    expect(checkPayload).toMatchObject(changeFields);
+  });
+
+  it('PUT /api/products/{productId} - should send code:400 if the id field is not in the correct format uuid', async () => {
+    const changeFields = { name: 'Changed name' };
+    const response = await app.inject({
+      method: 'PUT',
+      url: '/api/products/incorrectId',
+      payload: changeFields,
+    });
+
+    const payload = JSON.parse(response.payload);
+
+    expect(response.statusCode).toBe(400);
+    expect(payload.errorCode).toBe(validationCode);
+    expect(payload.message).toMatch(/\S+/);
+  });
+
+  it('PUT /api/products/{productId} - should send code:404 if record with id === productId does not exist', async () => {
+    const id = randomUUID();
+    const changeFields = { name: 'Changed name' };
+
+    const response = await app.inject({
+      method: 'PUT',
+      url: `/api/products/${id}`,
+      payload: changeFields,
+    });
+
+    const payload = JSON.parse(response.payload);
+
+    expect(response.statusCode).toBe(404);
+    expect(payload.message).toBe(getNotFoundMessage(id));
+  });
+
+  it('DELETE /api/products/{productId} - should delete product', async () => {
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/api/products/${lastProductId}`,
+    });
+
+    expect(response.statusCode).toBe(204);
+
+    const checkResponse = await app.inject({
+      method: 'GET',
+      url: `/api/products/${lastProductId}`,
+    });
+
+    expect(checkResponse.statusCode).toBe(404);
+  });
+
+  it('DELETE /api/products/{productId} - should send code:400 if the id field is not in the correct format uuid', async () => {
+    const response = await app.inject({
+      method: 'DELETE',
+      url: '/api/products/incorrectId',
+    });
+
+    const payload = JSON.parse(response.payload);
+
+    expect(response.statusCode).toBe(400);
+    expect(payload.errorCode).toBe(validationCode);
+    expect(payload.message).toMatch(/\S+/);
+  });
+
+  it('DELETE /api/products/{productId} - should send code:404 if record with id === productId does not exist', async () => {
+    const id = randomUUID();
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/api/products/${id}`,
+    });
+
+    const payload = JSON.parse(response.payload);
+
+    expect(response.statusCode).toBe(404);
+    expect(payload.message).toBe(getNotFoundMessage(id));
+  });
 });
