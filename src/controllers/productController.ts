@@ -2,8 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { db } from '../db/storage.js';
 import { Product } from '../types/product.js';
 import { randomUUID } from 'node:crypto';
-
-const getNotFoundMessage = (id: string) => `Product width id: ${id} doesn't exist`;
+import { getNotFoundMessage } from '../utils/getMessage.js';
 
 export const getAllProductsHandler = async (_request: FastifyRequest, reply: FastifyReply) => {
   const allProducts = await db.getAll();
