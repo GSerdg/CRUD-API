@@ -1,12 +1,33 @@
 import { Product } from '../types/product.js';
 
-const products: Product[] = [];
-
 export const db = {
-  getAll: async () => products,
-  getById: async (id: string) => products.find(product => product.id === id),
-  add: async (product: Product) => {
-    products.push(product);
+  _products: [] as Product[],
+  async getAll() {
+    return this._products;
+  },
+  async getById(id: string) {
+    return this._products.find(product => product.id === id);
+  },
+  async add(product: Product) {
+    this._products.push(product);
     return product;
+  },
+  async changeById(id: string, body: Partial<Product>) {
+    const product = await this.getById(id);
+
+    if (!product) return;
+
+    Object.assign(product, body);
+
+    return product;
+  },
+  async deleteById(id: string) {
+    const index = this._products.findIndex(item => item.id === id);
+
+    if (index === -1) return;
+
+    const product = this._products.splice(index, 1);
+
+    return product[0];
   },
 };

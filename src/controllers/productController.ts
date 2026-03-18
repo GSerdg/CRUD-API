@@ -1,8 +1,9 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { db } from '../db/storage.js';
-import { validate as uuidValidate } from 'uuid';
 import { Product } from '../types/product.js';
 import { randomUUID } from 'node:crypto';
+
+const getNotFoundMessage = (id: string) => `Product width id: ${id} doesn't exist`;
 
 export const getAllProductsHandler = async (_request: FastifyRequest, reply: FastifyReply) => {
   const allProducts = await db.getAll();
@@ -16,14 +17,10 @@ export const getProductByIdHandler = async (
 ) => {
   const { productId } = request.params as { productId: string };
 
-  if (!uuidValidate(productId)) {
-    return reply.code(400).send({ message: 'Invalid productId (not a UUID)' });
-  }
-
   const product = await db.getById(productId);
 
   if (!product) {
-    return reply.code(404).send({ message: `Product width id: ${productId} not found` });
+    return reply.code(404).send({ message: getNotFoundMessage(productId) });
   }
 
   return reply.code(200).send(product);
@@ -49,4 +46,34 @@ export const createProductHandler = async (
   });
 
   return reply.code(201).send(product);
+};
+
+export const putProductByIdHandler = async (
+  request: FastifyRequest<{ Params: { productId: string }; Body: Partial<Omit<Product, 'id'>> }>,
+  reply: FastifyReply
+) => {
+  const { productId } = request.params as { productId: string };
+
+  const product = await db.changeById(productId, request.body);
+
+  if (!product) {
+    return reply.code(404).send({ message: getNotFoundMessage(productId) });
+  }
+
+  return reply.code(200).send(product);
+};
+
+export const deleteProductByIdHandler = async (
+  request: FastifyRequest<{ Params: { productId: string } }>,
+  reply: FastifyReply
+) => {
+  const { productId } = request.params as { productId: string };
+
+  const product = await db.deleteById(productId);
+
+  if (!product) {
+    return reply.code(404).send({ message: getNotFoundMessage(productId) });
+  }
+
+  return reply.code(204).send();
 };

@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import type { FastifyError } from 'fastify';
 import { productRoutes } from './routes/productRoutes.js';
 
 export const buildServer = async () => {
@@ -10,8 +11,22 @@ export const buildServer = async () => {
     reply.status(404).send({ message: 'Resource not found' });
   });
 
-  fastify.setErrorHandler((error, _request, reply) => {
-    console.error('Server error:', error);
+  fastify.setErrorHandler((error: FastifyError, request, reply) => {
+    const statusCode = error.statusCode ?? 500;
+
+    request.log.error(error);
+
+    if (statusCode !== 500) {
+      const response = {
+        status: 'error',
+        statusCode,
+        errorCode: error.code,
+        message: error.message,
+        errors: error.validation ?? undefined,
+      };
+
+      return reply.status(statusCode).send(response);
+    }
 
     reply.status(500).send({ message: 'Internal server error' });
   });
