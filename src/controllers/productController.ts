@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { db } from '../db/storage.js';
-import { Product } from '../types/product.js';
+import { Product } from '../types/product.type.js';
 import { randomUUID } from 'node:crypto';
 import { getNotFoundMessage } from '../utils/getMessage.js';
 
@@ -35,7 +35,7 @@ export const createProductHandler = async (
     reply.code(400).send({ message: 'Price must be a positive number' });
   }
 
-  const product = await db.add({
+  const product = await db.create({
     id: randomUUID(),
     name,
     description,
@@ -53,7 +53,7 @@ export const putProductByIdHandler = async (
 ) => {
   const { productId } = request.params as { productId: string };
 
-  const product = await db.changeById(productId, request.body);
+  const product = await db.updateById(productId, request.body);
 
   if (!product) {
     return reply.code(404).send({ message: getNotFoundMessage(productId) });
