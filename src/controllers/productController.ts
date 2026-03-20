@@ -1,0 +1,78 @@
+import { FastifyReply, FastifyRequest } from 'fastify';
+import { db } from '../db/storage.js';
+import { Product } from '../types/product.type.js';
+import { randomUUID } from 'node:crypto';
+import { getNotFoundMessage } from '../utils/getMessage.js';
+
+export const getAllProductsHandler = async (_request: FastifyRequest, reply: FastifyReply) => {
+  const allProducts = await db.getAll();
+
+  return reply.code(200).send(allProducts);
+};
+
+export const getProductByIdHandler = async (
+  request: FastifyRequest<{ Params: { productId: string } }>,
+  reply: FastifyReply
+) => {
+  const { productId } = request.params as { productId: string };
+
+  const product = await db.getById(productId);
+
+  if (!product) {
+    return reply.code(404).send({ message: getNotFoundMessage(productId) });
+  }
+
+  return reply.code(200).send(product);
+};
+
+export const createProductHandler = async (
+  request: FastifyRequest<{ Body: Omit<Product, 'id'> }>,
+  reply: FastifyReply
+) => {
+  const { name, description, price, category, inStock } = request.body;
+
+  if (typeof price !== 'number' || price < 0) {
+    reply.code(400).send({ message: 'Price must be a positive number' });
+  }
+
+  const product = await db.create({
+    id: randomUUID(),
+    name,
+    description,
+    price,
+    category,
+    inStock,
+  });
+
+  return reply.code(201).send(product);
+};
+
+export const putProductByIdHandler = async (
+  request: FastifyRequest<{ Params: { productId: string }; Body: Partial<Omit<Product, 'id'>> }>,
+  reply: FastifyReply
+) => {
+  const { productId } = request.params as { productId: string };
+
+  const product = await db.updateById(productId, request.body);
+
+  if (!product) {
+    return reply.code(404).send({ message: getNotFoundMessage(productId) });
+  }
+
+  return reply.code(200).send(product);
+};
+
+export const deleteProductByIdHandler = async (
+  request: FastifyRequest<{ Params: { productId: string } }>,
+  reply: FastifyReply
+) => {
+  const { productId } = request.params as { productId: string };
+
+  const product = await db.deleteById(productId);
+
+  if (!product) {
+    return reply.code(404).send({ message: getNotFoundMessage(productId) });
+  }
+
+  return reply.code(204).send();
+};
